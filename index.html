@@ -62,91 +62,95 @@
 
       const expresion = convertirFracciones(input.replace(/\^/g, "**"));
 
-      let a = getCoef(expresion, 'x\*\*2');
-      let b = getCoef(expresion, 'x(?!\*)');
-      let c = getConstante(expresion);
+      try {
+        let a = getCoef(expresion, 'x\*\*2');
+        let b = getCoef(expresion, '(?<!\*)x(?!\*)');
+        let c = getConstante(expresion);
 
-      let tipo = a !== 0 ? 'cuadrática' : 'lineal';
-      let dom = "Dom(f) = ( -∞ , ∞ )";
-      let rango = "";
-      let solucion = "";
+        let tipo = a !== 0 ? 'cuadrática' : 'lineal';
+        let dom = "Dom(f) = ( -∞ , ∞ )";
+        let rango = "";
+        let solucion = "";
 
-      if (tipo === 'cuadrática') {
-        const verticeX = -b / (2 * a);
-        const verticeY = a * verticeX * verticeX + b * verticeX + c;
-        rango = a > 0 ? `Ran(f) = [ ${verticeY.toFixed(2)} , ∞ )` : `Ran(f) = ( -∞ , ${verticeY.toFixed(2)} ]`;
+        if (tipo === 'cuadrática') {
+          const verticeX = -b / (2 * a);
+          const verticeY = a * verticeX * verticeX + b * verticeX + c;
+          rango = a > 0 ? `Ran(f) = [ ${verticeY.toFixed(2)} , ∞ )` : `Ran(f) = ( -∞ , ${verticeY.toFixed(2)} ]`;
 
-        const discriminante = b * b - 4 * a * c;
-        if (discriminante > 0) {
-          const x1 = (-b + Math.sqrt(discriminante)) / (2 * a);
-          const x2 = (-b - Math.sqrt(discriminante)) / (2 * a);
-          solucion = `Soluciones: x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
-        } else if (discriminante === 0) {
-          const x = -b / (2 * a);
-          solucion = `Solución doble: x = ${x.toFixed(2)}`;
+          const discriminante = b * b - 4 * a * c;
+          if (discriminante > 0) {
+            const x1 = (-b + Math.sqrt(discriminante)) / (2 * a);
+            const x2 = (-b - Math.sqrt(discriminante)) / (2 * a);
+            solucion = `Soluciones: x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
+          } else if (discriminante === 0) {
+            const x = -b / (2 * a);
+            solucion = `Solución doble: x = ${x.toFixed(2)}`;
+          } else {
+            const real = (-b / (2 * a)).toFixed(2);
+            const imag = (Math.sqrt(-discriminante) / (2 * a)).toFixed(2);
+            solucion = `Soluciones complejas: x = ${real} ± ${imag}i`;
+          }
+
+          textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}. ${solucion}`;
+
         } else {
-          const real = (-b / (2 * a)).toFixed(2);
-          const imag = (Math.sqrt(-discriminante) / (2 * a)).toFixed(2);
-          solucion = `Soluciones complejas: x = ${real} ± ${imag}i`;
+          rango = "Ran(f) = ( -∞ , ∞ )";
+          const x = -c / b;
+          solucion = `Solución: x = ${x.toFixed(2)}`;
+          textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${x.toFixed(2)}.`;
         }
 
-        textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}. ${solucion}`;
+        resultado.innerHTML = `
+          <h2>Tipo: ${tipo}</h2>
+          <p><strong>Dominio:</strong> ${dom}</p>
+          <p><strong>Rango:</strong> ${rango}</p>
+          <p><strong>${solucion}</strong></p>
+        `;
 
-      } else {
-        rango = "Ran(f) = ( -∞ , ∞ )";
-        const x = -c / b;
-        solucion = `Solución: x = ${x.toFixed(2)}`;
-        textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${x.toFixed(2)}.`;
-      }
+        const x = [], y = [];
+        for (let i = -20; i <= 20; i += 0.2) {
+          x.push(i);
+          y.push(a * i * i + b * i + c);
+        }
 
-      resultado.innerHTML = `
-        <h2>Tipo: ${tipo}</h2>
-        <p><strong>Dominio:</strong> ${dom}</p>
-        <p><strong>Rango:</strong> ${rango}</p>
-        <p><strong>${solucion}</strong></p>
-      `;
-
-      const x = [], y = [];
-      for (let i = -20; i <= 20; i += 0.2) {
-        x.push(i);
-        y.push(a * i * i + b * i + c);
-      }
-
-      if (window.miGrafico) window.miGrafico.destroy();
-      window.miGrafico = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: x,
-          datasets: [{
-            label: 'f(x)',
-            data: y,
-            borderColor: '#007bff',
-            fill: false,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              min: -20,
-              max: 20,
-              title: { display: true, text: 'x' }
-            },
-            y: {
-              title: { display: true, text: 'f(x)' },
-              min: -20,
-              max: 20
-            }
+        if (window.miGrafico) window.miGrafico.destroy();
+        window.miGrafico = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: x,
+            datasets: [{
+              label: 'f(x)',
+              data: y,
+              borderColor: '#007bff',
+              fill: false,
+              pointRadius: 0
+            }]
           },
-          plugins: {
-            title: {
-              display: true,
-              text: 'Gráfica de la función'
+          options: {
+            responsive: true,
+            scales: {
+              x: {
+                min: -20,
+                max: 20,
+                title: { display: true, text: 'x' }
+              },
+              y: {
+                title: { display: true, text: 'f(x)' },
+                min: -20,
+                max: 20
+              }
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: 'Gráfica de la función'
+              }
             }
           }
-        }
-      });
+        });
+      } catch (e) {
+        resultado.innerHTML = `<p style='color:red'>Error al analizar la ecuación. Verifica la sintaxis.</p>`;
+      }
     }
 
     function convertirFracciones(expr) {
@@ -185,4 +189,5 @@
   </script>
 </body>
 </html>
+
 
