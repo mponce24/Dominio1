@@ -62,8 +62,8 @@
 
       const expresion = convertirFracciones(input.replace(/\^/g, "**"));
 
-      let a = getCoef(expresion, 'x**2');
-      let b = getCoef(expresion, 'x', true);
+      let a = getCoef(expresion, 'x\*\*2');
+      let b = getCoef(expresion, 'x(?!\*)');
       let c = getConstante(expresion);
 
       let tipo = a !== 0 ? 'cuadrática' : 'lineal';
@@ -75,18 +75,35 @@
         const verticeX = -b / (2 * a);
         const verticeY = a * verticeX * verticeX + b * verticeX + c;
         rango = a > 0 ? `Ran(f) = [ ${verticeY.toFixed(2)} , ∞ )` : `Ran(f) = ( -∞ , ${verticeY.toFixed(2)} ]`;
-        textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}.`;
+
+        const discriminante = b * b - 4 * a * c;
+        if (discriminante > 0) {
+          const x1 = (-b + Math.sqrt(discriminante)) / (2 * a);
+          const x2 = (-b - Math.sqrt(discriminante)) / (2 * a);
+          solucion = `Soluciones: x₁ = ${x1.toFixed(2)}, x₂ = ${x2.toFixed(2)}`;
+        } else if (discriminante === 0) {
+          const x = -b / (2 * a);
+          solucion = `Solución doble: x = ${x.toFixed(2)}`;
+        } else {
+          const real = (-b / (2 * a)).toFixed(2);
+          const imag = (Math.sqrt(-discriminante) / (2 * a)).toFixed(2);
+          solucion = `Soluciones complejas: x = ${real} ± ${imag}i`;
+        }
+
+        textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}. ${solucion}`;
+
       } else {
         rango = "Ran(f) = ( -∞ , ∞ )";
-        solucion = `Solución: x = ${(-c / b).toFixed(2)}`;
-        textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${(-c / b).toFixed(2)}.`;
+        const x = -c / b;
+        solucion = `Solución: x = ${x.toFixed(2)}`;
+        textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${x.toFixed(2)}.`;
       }
 
       resultado.innerHTML = `
         <h2>Tipo: ${tipo}</h2>
         <p><strong>Dominio:</strong> ${dom}</p>
         <p><strong>Rango:</strong> ${rango}</p>
-        ${solucion ? `<p><strong>${solucion}</strong></p>` : ''}
+        <p><strong>${solucion}</strong></p>
       `;
 
       const x = [], y = [];
@@ -133,23 +150,26 @@
     }
 
     function convertirFracciones(expr) {
-      return expr.replace(/(\d+\/\d+)(?=x|\b)/g, (frac) => {
-        const [num, den] = frac.split('/');
-        return `(${parseFloat(num) / parseFloat(den)})`;
+      return expr.replace(/(-?\d+\/?\d*)(?=x|\b)/g, (frac) => {
+        if (frac.includes('/')) {
+          const [num, den] = frac.split('/');
+          return `(${parseFloat(num) / parseFloat(den)})`;
+        }
+        return frac;
       });
     }
 
-    function getCoef(expr, variable, linear = false) {
+    function getCoef(expr, variable) {
       const re = new RegExp(`([-+]?\d*\.?\d*)\*?${variable}`);
       const match = expr.match(re);
-      if (!match) return linear ? 1 : 0;
+      if (!match) return 0;
       let val = match[1];
       return val === "" || val === "+" ? 1 : val === "-" ? -1 : parseFloat(val);
     }
 
     function getConstante(expr) {
-      const re = /([-+]?[0-9]+\.?[0-9]*)(?![^()]*\))/g;
-      const matches = expr.match(re);
+      const exprSinX = expr.replace(/[-+]?\d*\.?\d*\*?x(\*\*\d)?/g, '');
+      const matches = exprSinX.match(/[-+]?\d*\.?\d+/g);
       return matches ? matches.map(Number).reduce((a, b) => a + b, 0) : 0;
     }
 
@@ -165,3 +185,4 @@
   </script>
 </body>
 </html>
+
