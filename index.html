@@ -32,6 +32,15 @@
     h2 {
       color: #333;
     }
+    #vozBoton {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -40,9 +49,12 @@
   <button onclick="resolverEcuacion()">Resolver y Graficar</button>
 
   <div class="info" id="resultado"></div>
+  <button id="vozBoton" onclick="leerResultado()">🔊 Explicar Resultado</button>
   <canvas id="grafico"></canvas>
 
   <script>
+    let textoResultado = "";
+
     function resolverEcuacion() {
       const input = document.getElementById("ecuacion").value.trim();
       const resultado = document.getElementById("resultado");
@@ -62,9 +74,11 @@
         const verticeX = -b / (2 * a);
         const verticeY = a * verticeX * verticeX + b * verticeX + c;
         rango = a > 0 ? `Ran(f) = [ ${verticeY.toFixed(2)} , ∞ )` : `Ran(f) = ( -∞ , ${verticeY.toFixed(2)} ]`;
+        textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}.`;
       } else {
         rango = "Ran(f) = ( -∞ , ∞ )";
         solucion = `Solución: x = ${(-c / b).toFixed(2)}`;
+        textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${(-c / b).toFixed(2)}.`;
       }
 
       resultado.innerHTML = `
@@ -130,6 +144,17 @@
       const matches = expr.match(re);
       return matches ? matches.map(Number).reduce((a, b) => a + b, 0) : 0;
     }
+
+    function leerResultado() {
+      if ('speechSynthesis' in window && textoResultado) {
+        const voz = new SpeechSynthesisUtterance(textoResultado);
+        voz.lang = 'es-ES';
+        speechSynthesis.speak(voz);
+      } else {
+        alert("Tu navegador no soporta síntesis de voz o no hay resultado para leer.");
+      }
+    }
   </script>
 </body>
 </html>
+
