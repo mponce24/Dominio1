@@ -1,160 +1,238 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ecuaciones Lineales y Cuadráticas</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background-color: #f4f4f4;
-    }
-    input, button {
-      font-size: 1rem;
-      padding: 0.5rem;
-      margin: 0.5rem 0;
-      width: 100%;
-      max-width: 500px;
-    }
-    canvas {
-      max-width: 600px;
-      margin-top: 1rem;
-    }
-    .info {
-      margin-top: 1rem;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #333;
-    }
-    #vozBoton {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equation Solver & Grapher</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { display: flex; gap: 30px; }
+        .controls, .results, .graph-container { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        input[type="number"], button { padding: 8px; margin-bottom: 10px; }
+        button { cursor: pointer; background-color: #007BFF; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        canvas { max-width: 600px; max-height: 400px; }
+        h2 { color: #333; }
+        p { line-height: 1.6; }
+        .read-button { margin-top: 10px; background-color: #28a745; }
+        .read-button:hover { background-color: #218838; }
+    </style>
 </head>
 <body>
-  <h1>Solucionador de Ecuaciones Lineales y Cuadráticas</h1>
-  <input type="text" id="ecuacion" placeholder="Ejemplo: x^2 - 4x + 3">
-  <button onclick="resolverEcuacion()">Resolver y Graficar</button>
+    <h1>Equation Solver and Grapher</h1>
 
-  <div class="info" id="resultado"></div>
-  <button id="vozBoton" onclick="leerResultado()">🔊 Explicar Resultado</button>
-  <canvas id="grafico"></canvas>
+    <div class="container">
+        <div class="controls">
+            <h2>Linear Equation (ax + b = 0)</h2>
+            <label for="linearA">a:</label><br>
+            <input type="number" id="linearA" value="2"><br>
+            <label for="linearB">b:</label><br>
+            <input type="number" id="linearB" value="-4"><br>
+            <button onclick="solveLinear()">Solve Linear</button>
+            <div id="linearResults"></div>
+            <button class="read-button" onclick="speakResults('linearResults')">Read Linear Results</button>
 
-  <script>
-    let textoResultado = "";
 
-    function resolverEcuacion() {
-      const input = document.getElementById("ecuacion").value.trim();
-      const resultado = document.getElementById("resultado");
-      const ctx = document.getElementById("grafico").getContext("2d");
-      const expresion = input.replace(/\^/g, "**").replace(/(\d)x/g, "$1*x");
+            <hr>
 
-      let a = getCoef(expresion, 'x**2');
-      let b = getCoef(expresion, 'x', true);
-      let c = getConstante(expresion);
+            <h2>Quadratic Equation (ax² + bx + c = 0)</h2>
+            <label for="quadA">a:</label><br>
+            <input type="number" id="quadA" value="1"><br>
+            <label for="quadB">b:</label><br>
+            <input type="number" id="quadB" value="-3"><br>
+            <label for="quadC">c:</label><br>
+            <input type="number" id="quadC" value="2"><br>
+            <button onclick="solveQuadratic()">Solve Quadratic</button>
+            <div id="quadraticResults"></div>
+            <button class="read-button" onclick="speakResults('quadraticResults')">Read Quadratic Results</button>
+        </div>
 
-      let tipo = a !== 0 ? 'cuadrática' : 'lineal';
-      let dom = "Dom(f) = ( -∞ , ∞ )";
-      let rango = "";
-      let solucion = "";
+        <div class="graph-container">
+            <h2>Graph</h2>
+            <canvas id="equationGraph"></canvas>
+            <p>Graph displays values from -20 to 20 on both axes.</p>
+        </div>
+    </div>
 
-      if (tipo === 'cuadrática') {
-        const verticeX = -b / (2 * a);
-        const verticeY = a * verticeX * verticeX + b * verticeX + c;
-        rango = a > 0 ? `Ran(f) = [ ${verticeY.toFixed(2)} , ∞ )` : `Ran(f) = ( -∞ , ${verticeY.toFixed(2)} ]`;
-        textoResultado = `La función es cuadrática. Su dominio es todos los reales. El valor mínimo o máximo está en x igual a ${verticeX.toFixed(2)}, y el rango es ${rango}.`;
-      } else {
-        rango = "Ran(f) = ( -∞ , ∞ )";
-        solucion = `Solución: x = ${(-c / b).toFixed(2)}`;
-        textoResultado = `La función es lineal. Su dominio y rango son todos los reales. La solución de la ecuación es x igual a ${(-c / b).toFixed(2)}.`;
-      }
+    <script>
+        let chart; // Variable to hold the Chart.js instance
 
-      resultado.innerHTML = `
-        <h2>Tipo: ${tipo}</h2>
-        <p><strong>Dominio:</strong> ${dom}</p>
-        <p><strong>Rango:</strong> ${rango}</p>
-        ${solucion ? `<p><strong>${solucion}</strong></p>` : ''}
-      `;
+        function solveLinear() {
+            const a = parseFloat(document.getElementById('linearA').value);
+            const b = parseFloat(document.getElementById('linearB').value);
+            const resultsDiv = document.getElementById('linearResults');
 
-      const x = [], y = [];
-      for (let i = -20; i <= 20; i += 0.2) {
-        x.push(i);
-        y.push(a * i * i + b * i + c);
-      }
-
-      if (window.miGrafico) window.miGrafico.destroy();
-      window.miGrafico = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: x,
-          datasets: [{
-            label: 'f(x)',
-            data: y,
-            borderColor: '#007bff',
-            fill: false,
-            pointRadius: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: {
-              min: -20,
-              max: 20,
-              title: { display: true, text: 'x' }
-            },
-            y: {
-              title: { display: true, text: 'f(x)' },
-              min: -20,
-              max: 20
+            if (isNaN(a) || isNaN(b)) {
+                resultsDiv.innerHTML = "<p style='color: red;'>Please enter valid numbers for a and b.</p>";
+                return;
             }
-          },
-          plugins: {
-            title: {
-              display: true,
-              text: 'Gráfica de la función'
+
+            let solutionText = '';
+            if (a === 0) {
+                if (b === 0) {
+                    solutionText = "<p>Infinite solutions (0 = 0)</p>";
+                } else {
+                    solutionText = "<p>No solution (e.g., 0 = 5)</p>";
+                }
+            } else {
+                const x = -b / a;
+                solutionText = `<p><strong>Solution (x):</strong> ${x.toFixed(2)}</p>`;
             }
-          }
+
+            resultsDiv.innerHTML = `
+                ${solutionText}
+                <p><strong>Domain:</strong> All real numbers ((-∞, ∞))</p>
+                <p><strong>Range:</strong> All real numbers ((-∞, ∞))</p>
+            `;
+            plotGraph('linear', a, b);
         }
-      });
-    }
 
-    function getCoef(expr, variable, linear = false) {
-      const re = new RegExp(`([-+]?\\d*\\.?\\d*)\\*?${variable}`);
-      const match = expr.match(re);
-      if (!match) return linear ? 1 : 0;
-      let val = match[1];
-      return val === "" || val === "+" ? 1 : val === "-" ? -1 : parseFloat(val);
-    }
+        function solveQuadratic() {
+            const a = parseFloat(document.getElementById('quadA').value);
+            const b = parseFloat(document.getElementById('quadB').value);
+            const c = parseFloat(document.getElementById('quadC').value);
+            const resultsDiv = document.getElementById('quadraticResults');
 
-    function getConstante(expr) {
-      const re = /([-+]?\d+)(?![^\^]*x)/g;
-      const matches = expr.match(re);
-      return matches ? matches.map(Number).reduce((a, b) => a + b, 0) : 0;
-    }
+            if (isNaN(a) || isNaN(b) || isNaN(c)) {
+                resultsDiv.innerHTML = "<p style='color: red;'>Please enter valid numbers for a, b, and c.</p>";
+                return;
+            }
 
-    function leerResultado() {
-      if ('speechSynthesis' in window && textoResultado) {
-        const voz = new SpeechSynthesisUtterance(textoResultado);
-        voz.lang = 'es-ES';
-        speechSynthesis.speak(voz);
-      } else {
-        alert("Tu navegador no soporta síntesis de voz o no hay resultado para leer.");
-      }
-    }
-  </script>
+            if (a === 0) {
+                resultsDiv.innerHTML = "<p style='color: red;'>For a quadratic equation, 'a' cannot be zero. This is a linear equation.</p>";
+                return;
+            }
+
+            const discriminant = b * b - 4 * a * c;
+            let solutionText = '';
+            let domainText = 'All real numbers ((-∞, ∞))';
+            let rangeText = '';
+
+            if (discriminant > 0) {
+                const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                solutionText = `<p><strong>Solutions (x):</strong> ${x1.toFixed(2)}, ${x2.toFixed(2)}</p>`;
+            } else if (discriminant === 0) {
+                const x = -b / (2 * a);
+                solutionText = `<p><strong>Solution (x):</strong> ${x.toFixed(2)} (double root)</p>`;
+            } else {
+                const realPart = (-b / (2 * a)).toFixed(2);
+                const imagPart = (Math.sqrt(Math.abs(discriminant)) / (2 * a)).toFixed(2);
+                solutionText = `<p><strong>Solutions (x):</strong> ${realPart} + ${imagPart}i, ${realPart} - ${imagPart}i (complex roots)</p>`;
+            }
+
+            // Calculate range for quadratic
+            const vertexX = -b / (2 * a);
+            const vertexY = a * vertexX * vertexX + b * vertexX + c;
+
+            if (a > 0) {
+                rangeText = `[${vertexY.toFixed(2)}, ∞)`; // Parabola opens upwards
+            } else {
+                rangeText = `(-∞, ${vertexY.toFixed(2)}]`; // Parabola opens downwards
+            }
+
+
+            resultsDiv.innerHTML = `
+                ${solutionText}
+                <p><strong>Domain:</strong> ${domainText}</p>
+                <p><strong>Range:</strong> ${rangeText}</p>
+            `;
+            plotGraph('quadratic', a, b, c);
+        }
+
+        function plotGraph(type, a, b, c = 0) {
+            const ctx = document.getElementById('equationGraph').getContext('2d');
+            const dataPoints = [];
+            const labels = [];
+            const minY = -20;
+            const maxY = 20;
+
+            for (let x = -20; x <= 20; x += 0.5) { // Iterate with a small step for smoother curve
+                let y;
+                if (type === 'linear') {
+                    y = a * x + b;
+                } else if (type === 'quadratic') {
+                    y = a * x * x + b * x + c;
+                }
+
+                // Only add points within the -20 to 20 Y-axis range for better visualization
+                if (y >= minY && y <= maxY) {
+                    dataPoints.push({ x: x, y: y });
+                }
+            }
+
+            // If a chart already exists, destroy it to avoid conflicts
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: (type === 'linear' ? `y = ${a}x + ${b}` : `y = ${a}x² + ${b}x + ${c}`),
+                        data: dataPoints,
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0 // Hide individual points for a continuous line
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            title: {
+                                display: true,
+                                text: 'X-axis'
+                            },
+                            min: -20,
+                            max: 20,
+                            grid: {
+                                borderColor: 'black',
+                                borderWidth: 1,
+                                drawOnChartArea: true,
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Y-axis'
+                            },
+                            min: -20,
+                            max: 20,
+                            grid: {
+                                borderColor: 'black',
+                                borderWidth: 1,
+                                drawOnChartArea: true,
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // New function for text-to-speech
+        function speakResults(elementId) {
+            const resultsDiv = document.getElementById(elementId);
+            const textToSpeak = resultsDiv.innerText;
+
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                // You can change the language here. 'es-ES' for Spanish, 'en-US' for English.
+                utterance.lang = 'es-ES';
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert('Your browser does not support text-to-speech.');
+            }
+        }
+    </script>
 </body>
 </html>
 
