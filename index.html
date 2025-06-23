@@ -45,7 +45,7 @@
 </head>
 <body>
   <h1>Solucionador de Ecuaciones Lineales y Cuadráticas</h1>
-  <input type="text" id="ecuacion" placeholder="Ejemplo: (1/2)x^2 - (3/4)x + 1">
+  <input type="text" id="ecuacion" placeholder="Ejemplo: 1/2x^2 - 3/4x + 1">
   <button onclick="resolverEcuacion()">Resolver y Graficar</button>
 
   <div class="info" id="resultado"></div>
@@ -133,7 +133,10 @@
     }
 
     function convertirFracciones(expr) {
-      return expr.replace(/\((\d+)\/(\d+)\)/g, (_, num, den) => `(${parseFloat(num) / parseFloat(den)})`);
+      return expr.replace(/(\d+\/\d+)(?=x|\b)/g, (frac) => {
+        const [num, den] = frac.split('/');
+        return `(${parseFloat(num) / parseFloat(den)})`;
+      });
     }
 
     function getCoef(expr, variable, linear = false) {
@@ -145,7 +148,7 @@
     }
 
     function getConstante(expr) {
-      const re = /([-+]?[0-9]+\.?[0-9]*)(?![^(]*\))/g;
+      const re = /([-+]?[0-9]+\.?[0-9]*)(?![^()]*\))/g;
       const matches = expr.match(re);
       return matches ? matches.map(Number).reduce((a, b) => a + b, 0) : 0;
     }
@@ -162,4 +165,3 @@
   </script>
 </body>
 </html>
-
